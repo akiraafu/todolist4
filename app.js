@@ -27,6 +27,7 @@ window.addEventListener("load", () => {
 
         displayTodos();
     });
+      displayTodos();
 });
 
 function displayTodos() {
