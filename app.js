@@ -1,127 +1,106 @@
-// navbar
-const menu = document.querySelector(".menu-icon");
-const navLinks = document.querySelector(".navLinks");
-
-menu.onclick = () => {
-    navLinks.classList.toggle("active");
-    menu.classList.toggle("move");
-};
-
-//links
-const myform = document.getElementById("myform");
-const items = JSON.parse(localStorage.getItem("items")) || [];
-
 window.addEventListener("load", () => {
-    items.map((item) => {
-        const { originLink, result } = item;
-        displayLinks(originLink, result);
+    todos = JSON.parse(localStorage.getItem("todos")) || [];
+    const nameInput = document.querySelector("#name");
+    const newTodoForm = document.querySelector("#new-todo-form");
+
+    const username = localStorage.getItem("username") || "";
+
+    nameInput.value = username;
+
+    nameInput.addEventListener("change", (e) => {
+        localStorage.setItem("username", e.target.value);
     });
+
+    newTodoForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const todo = {
+            content: e.target.elements.content.value,
+            category: e.target.elements.category.value,
+            done: false,
+            createdAt: new Date().getTime(),
+        };
+
+        todos.push(todo);
+        localStorage.setItem("todos", JSON.stringify(todos));
+        e.target.reset();
+
+        displayTodos();
+    });
+    displayTodos();
 });
 
-myform.addEventListener("submit", addLinks);
+function displayTodos() {
+    const todoList = document.querySelector("#todo-list");
+    todoList.innerHTML = "";
+    todos.forEach((todo) => {
+        const todoItem = document.createElement("div");
+        todoItem.classList.add("todo-item");
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        const span = document.createElement("span");
+        const content = document.createElement("div");
+        const actions = document.createElement("div");
+        const editButton = document.createElement("button");
+        const deleteButton = document.createElement("button");
 
-function addLinks(e) {
-    // if (myform.checkValidity() === true) {
-    //     e.preventDefault();
-    //     shorterLink();
-    // }
-    e.preventDefault();
-    shorterLink();
-    this.reset();
-}
+        input.type = "checkbox";
+        input.checked = todo.done;
+        span.classList.add("bubble");
+        if (todo.category == "personal") {
+            span.classList.add("personal");
+        } else {
+            span.classList.add("business");
+        }
 
-const shorterLink = async () => {
-    const originLink = document.getElementById("userInput").value;
-    let result = await getData(originLink);
-    addToLocalStorage(originLink, result);
-    displayLinks(originLink, result);
-    return originLink;
-};
+        content.classList.add("todo-content");
+        actions.classList.add("actions");
+        editButton.classList.add("edit");
+        deleteButton.classList.add("delete");
 
-async function getData(originLink) {
-    const response = await fetch(`https://api.shrtco.de/v2/shorten?url=${originLink}`);
-    const links = await response.json();
-    const result = links["result"]["full_short_link2"];
+        content.innerHTML = `<input type='text' value='${todo.content}' readonly>`;
+        editButton.innerHTML = "Edit";
+        deleteButton.innerHTML = "Delete";
 
-    console.log(result);
-    return result;
-}
+        label.appendChild(input);
+        label.appendChild(span);
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+        todoItem.appendChild(label);
+        todoItem.appendChild(content);
+        todoItem.appendChild(actions);
 
-const addToLocalStorage = (originLink, result) => {
-    const item = {
-        originLink,
-        result,
-    };
-    items.push(item);
-    localStorage.setItem("items", JSON.stringify(items));
-};
+        todoList.appendChild(todoItem);
 
-const itemsList = document.querySelector(".linksList");
+        if (todo.done) {
+            todoItem.classList.add("done");
+        }
 
-// function displayLinks(originLink, result) {
-//     itemsList.innerHTML = "";
-//     items.forEach((item) => {
-//         // for (let i = 0; i < Object.keys(JSON.parse(localStorage.getItem("items"))).length; i++) {
-
-//         const linksShow = document.createElement("li");
-//         const shortenLinks = document.createElement("div");
-//         const allLinks = document.createElement("div");
-//         const userLink = document.createElement("div");
-//         const outputLink = document.createElement("div");
-//         const copyBtn = document.createElement("button");
-
-//         linksShow.classList.add("linksShow");
-//         shortenLinks.classList.add("shortenLinks");
-//         allLinks.classList.add("allLinks");
-//         userLink.classList.add("userLink");
-//         outputLink.classList.add("outputLink");
-//         copyBtn.classList.add("copyBtn");
-
-//         userLink.innerHTML = `${originLink}`;
-//         outputLink.innerText = `${result}`;
-
-//         allLinks.appendChild(userLink);
-//         allLinks.appendChild(outputLink);
-//         shortenLinks.appendChild(allLinks);
-//         shortenLinks.appendChild(copyBtn);
-//         linksShow.appendChild(shortenLinks);
-//         itemsList.appendChild(linksShow);
-
-//         // copy button function
-//         copyBtn.style.backgroundColor = "var(--Cyan)";
-//         copyBtn.innerHTML = "Copy";
-//         copyBtn.addEventListener("click", () => {
-//             navigator.clipboard.writeText(result);
-//             copyBtn.style.backgroundColor = "var(--Dark-Violet)";
-//             copyBtn.innerHTML = "Copied!";
-//         });
-//     });
-// }
-
-function displayLinks(originLink, result) {
-    const linksShow = document.createElement("li");
-    linksShow.classList.add("linksShow");
-
-    const setItem = `
-           
-            <div class="shortenLinks">
-                <div class="allLinks">
-                    <div class="userLink">${originLink}</div>
-                    <div class="outputLink">${result}</div>
-                </div>
-                <button class="copyBtn">Copy</button>
-            </div>
-        `;
-    linksShow.innerHTML = setItem;
-    itemsList.appendChild(linksShow);
-    const copyBtn = linksShow.querySelector(".copyBtn");
-    copyBtn.style.backgroundColor = "var(--Cyan)";
-    copyBtn.innerHTML = "Copy";
-    // copy button function
-
-    copyBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText(result);
-        copyBtn.style.backgroundColor = "var(--Dark-Violet)";
-        copyBtn.innerHTML = "Copied!";
+        input.addEventListener("change", (e) => {
+            todo.done = e.target.checked;
+            localStorage.setItem("todos", JSON.stringify(todos));
+            if (todo.done) {
+                todoItem.classList.add("done");
+            } else {
+                todoItem.classList.remove("done");
+            }
+            displayTodos();
+        });
+        editButton.addEventListener("click", (e) => {
+            const input = content.querySelector("input");
+            input.removeAttribute("readonly");
+            input.focus();
+            input.addEventListener("blur", (e) => {
+                input.setAttribute("readonly", true);
+                todo.content = e.target.value;
+                localStorage.setItem("todos", JSON.stringify(todos));
+                displayTodos();
+            });
+        });
+        deleteButton.addEventListener("click", (e) => {
+            todos = todos.filter((t) => t != todo);
+            localStorage.setItem("todos", JSON.stringify(todos));
+            displayTodos();
+        });
     });
 }
